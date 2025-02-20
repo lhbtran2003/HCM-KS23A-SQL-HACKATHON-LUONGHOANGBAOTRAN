@@ -1,0 +1,222 @@
+CREATE DATABASE BOOKS_MANAGEMENT;
+
+USE BOOKS_MANAGEMENT;
+
+-- Tao bang authors
+CREATE TABLE AUTHORS (
+   AUTHOR_ID INT PRIMARY KEY AUTO_INCREMENT,
+   AUTHOR_NAME VARCHAR(100) NOT NULL,
+   BIRTH_YEAR YEAR
+);
+
+-- Tao bang books
+CREATE TABLE BOOKS (
+   BOOK_ID INT PRIMARY KEY AUTO_INCREMENT,
+   TITLE VARCHAR(255) NOT NULL,
+   AUTHOR_ID INT,
+   CATEGORY VARCHAR(100),
+   PUBLISHED_YEAR YEAR,
+   AVAILABLE_COPIES INT
+);
+
+-- Tao bang members
+CREATE TABLE MEMBERS (
+   MEMBER_ID INT PRIMARY KEY AUTO_INCREMENT,
+   MEMBER_NAME VARCHAR(100) NOT NULL,
+   PHONE VARCHAR(20) NOT NULL UNIQUE,
+   EMAIL VARCHAR(100) NOT NULL UNIQUE,
+   ADDRESS VARCHAR(255)
+);
+
+-- Tao bang member_info
+CREATE TABLE MEMBER_INFO (
+   MEMBER_ID INT PRIMARY KEY,
+   MEMBERSHIP_TYPE ENUM('Standard', 'Premium'),
+   REGISTRATION_DATE DATE,
+   EXPIRY_DATE DATE
+);
+
+-- Tao bang borrow_records
+CREATE TABLE BORROW_RECORDS (
+   BORROW_ID INT PRIMARY KEY  AUTO_INCREMENT,
+   MEMBER_ID INT,
+   BOOK_ID INT,
+   BORROW_DATE DATE,
+   RETURN_DATE DATE
+);
+
+-- Tao quan he tu bang books den author
+ALTER TABLE BOOKS
+ADD CONSTRAINT FK_AUTHORS_BOOKS
+FOREIGN KEY (AUTHOR_ID) REFERENCES AUTHORS(AUTHOR_ID);
+
+-- -- Tao quan he tu bang member_info den members
+ALTER TABLE MEMBER_INFO
+ADD CONSTRAINT FK_MEMBERS_MEMBERINFO
+FOREIGN KEY (MEMBER_ID) REFERENCES MEMBERS(MEMBER_ID);
+
+-- Tao quan he tu bang borrow_records den members
+ALTER TABLE BORROW_RECORDS
+ADD CONSTRAINT FK_MEMBERS_BORROW
+FOREIGN KEY (MEMBER_ID) REFERENCES MEMBERS(MEMBER_ID);
+
+-- Tao quan he tu bang borrow_records den books
+ALTER TABLE BORROW_RECORDS
+ADD CONSTRAINT FK_BOOKS_BORROW
+FOREIGN KEY (BOOK_ID) REFERENCES BOOKS(BOOK_ID);
+
+-- Thêm cột fine_amount (DECIMAL(10,2), số tiền phạt) vào bảng tbl_borrow_records
+ALTER TABLE BORROW_RECORDS
+ADD COLUMN FINE_AMOUNT DECIMAL(10,2);
+
+-- Sửa kiểu dữ liệu cột phone trong bảng tbl_members thành VARCHAR(15).
+ALTER TABLE MEMBERS
+MODIFY COLUMN PHONE VARCHAR(15);
+
+-- Xóa cột expiry_date khỏi bảng tbl_member_info.
+ALTER TABLE MEMBER_INFO
+DROP COLUMN EXPIRY_DATE;
+
+-- PHAN 2: TRUY VAN DU LIEU
+
+-- Chen du lieu vao bang AUTHORS
+INSERT INTO AUTHORS 
+VALUES
+(NULL, 'Đoàn Gioi', 1917),
+(NULL, 'Ngô Tất Tố', 1901),
+(NULL, 'Nam Cao', 1917),
+(NULL, 'Vũ Trọng Phụng', 1903),
+(NULL, 'Tô Hoài', 1920)
+
+
+
+-- Chen du lieu vao bang BOOKS
+INSERT INTO BOOKS 
+VALUES
+(NULL, 'Đất rừng phương Nam', 1, 'Tiểu thuyết', 1954, 10),
+(NULL, 'Tắt đèn', 2, 'Tiểu thuyết', 1940, 5),
+(NULL,'Đời thừa', 3, 'Tiểu thuyết', 1943, 8),
+ (NULL,'Số đỏ', 4, 'Tiểu thuyết', 1940, 12),
+( NULL,'Dế mèn phiêu lưu kí', 5, 'Truyện thiếu nhi', 1941, 7)
+
+-- -- Chen du lieu vao bang MEMBERS
+INSERT INTO MEMBERS 
+VALUES 
+(NULL,'Nguyễn Văn A', '0932767326', 'anv@gmail.com', 'Hà Nội'),
+(NULL,'Trần Thị B', '0992378636', 'btt@gmail.com', 'Hồ Chí Minh'),
+(NULL,'Lê Văn C', '0932767365', 'clv@gmail.com', 'Đà Nẵng'),
+(NULL,'Phạm Thị D', '0973265632', 'dpt@gmail.com', 'Hà Nội'),
+(NULL,'Nguyễn Thị E', '0923865633', 'ent@gmail.com', 'Hồ Chí Minh');
+
+-- Chen du lieu vao bang MEMBER_INFO
+-- Thêm cột expiry_date
+ALTER TABLE MEMBER_INFO
+ADD COLUMN EXPIRY_DATE DATE; 
+INSERT INTO MEMBER_INFO 
+VALUES 
+(1, 'Premium', '2023-01-01', '2024-01-01'),
+(2, 'Standard', '2023-04-05', '2024-04-05'),
+(3, 'Premium', '2023-03-10', '2024-03-10'),
+(4, 'Premium', '2023-02-15', '2024-02-15'),
+(5, 'Standard', '2023-05-20', '2024-05-20');
+
+-- Chen du lieu vao bang BORROW_RECORDS
+INSERT INTO BORROW_RECORDS (MEMBER_ID, BOOK_ID, BORROW_DATE, RETURN_DATE) 
+VALUES 
+(1, 6, '2023-01-10', '2023-01-20'),
+(2, 7, '2023-02-05', '2023-02-15'),
+(3, 8, '2023-03-15', NULL),
+(4, 9, '2023-04-10', '2023-04-25'),
+(5, 10, '2023-05-05', '2023-05-15');
+
+-- Viết truy vấn lấy danh sách tất cả các sách có trong thư viện
+-- Mã sách, tên sách, thể loại, năm xuất bản, số bản sách có sẵn.
+SELECT BOOK_ID, TITLE, CATEGORY, PUBLISHED_YEAR, AVAILABLE_COPIES FROM BOOKS;
+ 
+ -- Viết truy vấn lấy danh sách tất cả các thành viên đã từng mượn sách, không trùng lặp.
+ SELECT 
+     MEMBERS.MEMBER_NAME 
+ FROM BORROW_RECORDS
+ INNER JOIN MEMBERS
+ ON BORROW_RECORDS.MEMBER_ID = MEMBERS.MEMBER_ID;
+
+
+-- Viết truy vấn lấy danh sách tất cả tác giả và số lượng sách họ đã viết, hiển thị:
+SELECT 
+    AUTHORS.AUTHOR_NAME, 
+    COUNT(BOOKS.BOOK_ID) AS TOTAL_BOOKS
+FROM AUTHORS
+LEFT JOIN BOOKS 
+ON AUTHORS.AUTHOR_ID = BOOKS.AUTHOR_ID
+GROUP BY AUTHORS.AUTHOR_NAME;
+
+
+-- Viết truy vấn lấy danh sách tất cả các sách đã từng được mượn
+SELECT 
+    BOOKS.TITLE, 
+    COUNT(BORROW_RECORDS.BOOK_ID) AS TOTAL_BORROWED
+FROM BOOKS
+JOIN BORROW_RECORDS 
+ON BOOKS.BOOK_ID = BORROW_RECORDS.BOOK_ID
+GROUP BY BOOKS.BOOK_ID, BOOKS.TITLE
+
+-- Viết truy vấn tìm số lượng sách mỗi bạn đọc đã mượn, hiển thị:
+SELECT 
+    MEMBERS.MEMBER_NAME, 
+    COUNT(BORROW_RECORDS.BOOK_ID) AS TOTAL_BORROWED
+FROM MEMBERS
+JOIN BORROW_RECORDS 
+ON MEMBERS.MEMBER_ID = BORROW_RECORDS.MEMBER_ID
+GROUP BY MEMBERS.MEMBER_ID, MEMBERS.MEMBER_NAME
+
+
+-- Viết truy vấn chỉ hiển thị những bạn đọc đã mượn từ 3 cuốn sách trở lên.
+SELECT 
+    MEMBERS.MEMBER_NAME, 
+    COUNT(BORROW_RECORDS.BOOK_ID) AS TOTAL_BORROWED
+FROM MEMBERS
+JOIN BORROW_RECORDS 
+ON MEMBERS.MEMBER_ID = BORROW_RECORDS.MEMBER_ID
+GROUP BY MEMBERS.MEMBER_ID, MEMBERS.MEMBER_NAME
+HAVING TOTAL_BORROWED >= 3
+
+
+-- Viết truy vấn lấy danh sách 5 cuốn sách được mượn nhiều nhất
+SELECT 
+    BOOKS.TITLE AS BOOK_NAME, 
+    COUNT(BORROW_RECORDS.BOOK_ID) AS TOTAL_BORROWED
+FROM BOOKS
+JOIN BORROW_RECORDS 
+ON BOOKS.BOOK_ID = BORROW_RECORDS.BOOK_ID
+GROUP BY BOOKS.BOOK_ID, BOOKS.TITLE
+LIMIT 5;
+
+-- Viết truy vấn lấy danh sách tất cả thành viên và số lượng sách họ đã mượn
+SELECT 
+    MEMBERS.MEMBER_NAME AS READER_NAME, 
+    COALESCE(COUNT(BORROW_RECORDS.BORROW_ID), 0) AS TOTAL_BORROWED
+FROM MEMBERS
+LEFT JOIN BORROW_RECORDS 
+ON MEMBERS.MEMBER_ID = BORROW_RECORDS.MEMBER_ID
+GROUP BY MEMBERS.MEMBER_ID, MEMBERS.MEMBER_NAME
+
+-- Viết truy vấn lấy tên bạn đọc đã mượn nhiều sách nhất
+SELECT 
+    MEMBERS.MEMBER_NAME AS READER_NAME, 
+    COUNT(BORROW_RECORDS.BORROW_ID) AS TOTAL_BORROWED
+FROM MEMBERS
+JOIN BORROW_RECORDS 
+ON MEMBERS.MEMBER_ID = BORROW_RECORDS.MEMBER_ID
+GROUP BY MEMBERS.MEMBER_ID, MEMBERS.MEMBER_NAME
+ORDER BY TOTAL_BORROWED DESC
+LIMIT 1;
+
+-- Viết truy vấn lấy danh sách các cuốn sách chưa từng được mượn.
+SELECT 
+    BOOKS.TITLE
+FROM BOOKS
+LEFT JOIN BORROW_RECORDS 
+ON BOOKS.BOOK_ID = BORROW_RECORDS.BOOK_ID
+WHERE BORROW_RECORDS.BOOK_ID IS NULL;
+
+
